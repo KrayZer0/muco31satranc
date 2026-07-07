@@ -5,17 +5,64 @@
 /* ---------- Shared DOM helpers ---------- */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const XLINK_NS = 'http://www.w3.org/1999/xlink';
+
+const PIECE_SHAPES = {
+  P: [
+    { tag: 'circle', attrs: { cx: 22.5, cy: 12, r: 6.5 } },
+    { tag: 'path', attrs: { d: 'M18 19 h9 v4 h-9 z' } },
+    { tag: 'path', attrs: { d: 'M14 34 l3 -11 h11 l3 11 z' } },
+    { tag: 'rect', attrs: { x: 11, y: 34, width: 23, height: 4, rx: 1.5 } },
+  ],
+  R: [
+    { tag: 'rect', attrs: { x: 10, y: 8, width: 5, height: 6 } },
+    { tag: 'rect', attrs: { x: 20, y: 8, width: 5, height: 6 } },
+    { tag: 'rect', attrs: { x: 30, y: 8, width: 5, height: 6 } },
+    { tag: 'rect', attrs: { x: 10, y: 14, width: 25, height: 4 } },
+    { tag: 'path', attrs: { d: 'M14 18 h17 l2 12 h-21 z' } },
+    { tag: 'rect', attrs: { x: 9, y: 34, width: 27, height: 4, rx: 1.5 } },
+  ],
+  B: [
+    { tag: 'circle', attrs: { cx: 22.5, cy: 8, r: 2.8 } },
+    { tag: 'path', attrs: { d: 'M22.5 12 c-6 4 -8 11 -8 15 c0 4 3.5 6 8 6 s8 -2 8 -6 c0 -4 -2 -11 -8 -15 z' } },
+    { tag: 'rect', attrs: { x: 19, y: 20, width: 7, height: 2.4, rx: 1 } },
+    { tag: 'rect', attrs: { x: 12, y: 34, width: 21, height: 4, rx: 1.5 } },
+  ],
+  N: [
+    { tag: 'path', attrs: { d: 'M11 34 c-0.5 -3 0.5 -5 3 -6 c-3 -2.5 -3.5 -6 -2 -9 c1 -2 2.5 -3 2.5 -3 c-1 -2.5 0 -5.5 2.5 -6.5 c2 -0.8 4 0 5 1.5 c3.5 -1 7.5 0 9.5 3 c1.8 2.7 1.8 6.3 0 9 c1.8 1.3 2.5 3 2.5 5 v6 z' } },
+    { tag: 'rect', attrs: { x: 9, y: 34, width: 27, height: 4, rx: 1.5 } },
+  ],
+  Q: [
+    { tag: 'circle', attrs: { cx: 22.5, cy: 6, r: 2.3 } },
+    { tag: 'circle', attrs: { cx: 12, cy: 10, r: 2.1 } },
+    { tag: 'circle', attrs: { cx: 33, cy: 10, r: 2.1 } },
+    { tag: 'circle', attrs: { cx: 17, cy: 7.5, r: 1.8 } },
+    { tag: 'circle', attrs: { cx: 28, cy: 7.5, r: 1.8 } },
+    { tag: 'path', attrs: { d: 'M12 10 L14.5 25 H30.5 L33 10 L27 16 L22.5 8 L18 16 Z' } },
+    { tag: 'path', attrs: { d: 'M14 25 h17 l1.5 8 h-20 z' } },
+    { tag: 'rect', attrs: { x: 10, y: 35, width: 25, height: 4, rx: 1.5 } },
+  ],
+  K: [
+    { tag: 'path', attrs: { d: 'M21 3 h3 v4 h4 v3 h-4 v4 h-3 v-4 h-4 v-3 h4 z' } },
+    { tag: 'path', attrs: { d: 'M14 15 L16.5 25 H28.5 L31 15 L25 19.5 L22.5 12 L20 19.5 Z' } },
+    { tag: 'path', attrs: { d: 'M14 25 h17 l1.5 8 h-20 z' } },
+    { tag: 'rect', attrs: { x: 10, y: 35, width: 25, height: 4, rx: 1.5 } },
+  ],
+};
 
 function createPieceIcon(type, color, extraClass) {
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('viewBox', '0 0 45 45');
   svg.classList.add('piece-icon', 'piece-' + color);
   if (extraClass) svg.classList.add(extraClass);
-  const use = document.createElementNS(SVG_NS, 'use');
-  use.setAttributeNS(XLINK_NS, 'href', '#piece-' + type);
-  use.setAttribute('href', '#piece-' + type);
-  svg.appendChild(use);
+  const shapes = PIECE_SHAPES[type] || [];
+  for (const shape of shapes) {
+    const el = document.createElementNS(SVG_NS, shape.tag);
+    for (const key in shape.attrs) {
+      el.setAttribute(key, shape.attrs[key]);
+    }
+    el.setAttribute('fill', 'currentColor');
+    svg.appendChild(el);
+  }
   return svg;
 }
 
