@@ -4,6 +4,21 @@
 
 /* ---------- Shared DOM helpers ---------- */
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const XLINK_NS = 'http://www.w3.org/1999/xlink';
+
+function createPieceIcon(type, color, extraClass) {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 45 45');
+  svg.classList.add('piece-icon', 'piece-' + color);
+  if (extraClass) svg.classList.add(extraClass);
+  const use = document.createElementNS(SVG_NS, 'use');
+  use.setAttributeNS(XLINK_NS, 'href', '#piece-' + type);
+  use.setAttribute('href', '#piece-' + type);
+  svg.appendChild(use);
+  return svg;
+}
+
 function renderBoardGeneric(boardEl, gameState, opts) {
   boardEl.innerHTML = '';
   const orientation = opts.orientation || 'w';
@@ -43,10 +58,7 @@ function renderBoardGeneric(boardEl, gameState, opts) {
 
       const piece = gameState.board[r][c];
       if (piece) {
-        const span = document.createElement('span');
-        span.className = 'piece piece-' + piece.color;
-        span.textContent = PIECE_GLYPHS[piece.color][piece.type];
-        sq.appendChild(span);
+        sq.appendChild(createPieceIcon(piece.type, piece.color));
       }
 
       sq.addEventListener('click', () => opts.onSquareClick(r, c));
@@ -65,12 +77,7 @@ function updateCoords(filesElId, ranksElId, orientation) {
 }
 
 function renderCapturedGeneric(whiteEl, blackEl, capturedByColor) {
-  const build = (color, list) => list.map(t => {
-    const span = document.createElement('span');
-    span.className = 'captured-piece piece-' + color;
-    span.textContent = PIECE_GLYPHS[color][t];
-    return span;
-  });
+  const build = (color, list) => list.map(t => createPieceIcon(t, color, 'captured-piece'));
   whiteEl.innerHTML = '';
   whiteEl.append(...build('b', capturedByColor.w));
   blackEl.innerHTML = '';
@@ -86,8 +93,8 @@ function openPromotionDialog(color, variants, onChoose) {
     const variant = variants.find(v => v.promotion === type);
     if (!variant) continue;
     const btn = document.createElement('button');
-    btn.className = 'promo-btn piece-' + color;
-    btn.textContent = PIECE_GLYPHS[color][type];
+    btn.className = 'promo-btn';
+    btn.appendChild(createPieceIcon(type, color));
     btn.addEventListener('click', () => {
       promoOverlay.hidden = true;
       onChoose(variant);
