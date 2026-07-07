@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAHTA — Satranç Dersleri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app">
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">♞</span>
+        <h1>müco31</h1>
+      </div>
+
+      <nav class="mode-tabs" id="modeTabs">
+        <button class="mode-tab active" data-mode="lessons">Dersler</button>
+        <button class="mode-tab" data-mode="freeplay">Serbest Oyun</button>
+      </nav>
+    </header>
+
+    <!-- ================= LESSONS BROWSER ================= -->
+    <main class="view" id="view-lessons">
+      <p class="view-intro">Bir açılış seç, hamleleri sırayla kendin bul ve her hamlenin mantığını öğren.</p>
+      <div class="opening-grid" id="openingGrid"></div>
+    </main>
+
+    <!-- ================= LESSON PLAY ================= -->
+    <main class="view" id="view-lessonPlay" hidden>
+      <div class="layout">
+
+        <section class="board-wrap">
+          <div class="board-frame">
+            <div class="coords coords-files" id="lessonFiles"></div>
+            <div class="coords coords-ranks" id="lessonRanks"></div>
+            <div class="board" id="lessonBoard" role="grid" aria-label="Ders tahtası"></div>
+          </div>
+          <button class="btn-ghost back-btn" id="lessonBackBtn">← Derslere dön</button>
+        </section>
+
+        <aside class="side-panel">
+          <div class="panel-card">
+            <h2 class="panel-title" id="lessonTitle">Açılış</h2>
+            <p class="lesson-summary" id="lessonSummary"></p>
+            <div class="lesson-progress" id="lessonProgress"></div>
+          </div>
+
+          <div class="panel-card lesson-instruction-card">
+            <p class="lesson-turn" id="lessonTurnText">Sıra sende</p>
+            <p class="lesson-instruction" id="lessonInstruction">Doğru hamleyi tahtada oynayarak bul.</p>
+            <div class="lesson-actions">
+              <button class="btn-ghost" id="lessonHintBtn">İpucu</button>
+              <button class="btn-ghost" id="lessonShowBtn">Hamleyi Göster</button>
+            </div>
+          </div>
+
+          <div class="panel-card" id="lessonDoneCard" hidden>
+            <h2 class="panel-title">Tebrikler! 🎉</h2>
+            <p>Bu açılış hattını tamamladın.</p>
+            <div class="lesson-actions">
+              <button class="btn-primary" id="lessonContinueBotBtn">Botla devam et</button>
+              <button class="btn-ghost" id="lessonRetryBtn">Tekrar dene</button>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </main>
+
+    <!-- ================= FREE PLAY ================= -->
+    <main class="view" id="view-freeplay" hidden>
+      <div class="layout">
+
+        <section class="board-wrap">
+          <div class="board-frame">
+            <div class="coords coords-files" id="freeFiles"></div>
+            <div class="coords coords-ranks" id="freeRanks"></div>
+            <div class="board" id="freeBoard" role="grid" aria-label="Serbest oyun tahtası"></div>
+          </div>
+          <p class="board-caption" id="freeCaption">Bir taş seçmek için tıklayın, sonra gitmek istediğiniz kareye tıklayın.</p>
+        </section>
+
+        <aside class="side-panel">
+
+          <div class="panel-card">
+            <h2 class="panel-title">Oyun</h2>
+            <div class="color-picker" id="colorPicker">
+              <button class="color-btn active" data-color="w">Beyazla oyna</button>
+              <button class="color-btn" data-color="b">Siyahla oyna</button>
+            </div>
+            <div class="turn-indicator" id="freeTurnIndicator">
+              <span class="turn-dot" id="freeTurnDot"></span>
+              <span id="freeTurnText">Sıra beyazda</span>
+            </div>
+            <div class="lesson-actions">
+              <button class="btn-ghost" id="freeUndoBtn">Geri Al</button>
+              <button class="btn-primary" id="freeNewGameBtn">Yeni Oyun</button>
+            </div>
+          </div>
+
+          <div class="panel-card coach-card">
+            <h2 class="panel-title">Koç</h2>
+            <div class="coach-log" id="coachLog">
+              <p class="log-empty">Oynadıkça buradan geri bildirim alacaksın.</p>
+            </div>
+          </div>
+
+          <div class="panel-card captured-card">
+            <h2 class="panel-title">Alınan Taşlar</h2>
+            <div class="captured-row">
+              <span class="captured-label">Beyaz aldı</span>
+              <div class="captured-pieces" id="freeCapturedByWhite"></div>
+            </div>
+            <div class="captured-row">
+              <span class="captured-label">Siyah aldı</span>
+              <div class="captured-pieces" id="freeCapturedByBlack"></div>
+            </div>
+          </div>
+
+          <div class="panel-card log-card">
+            <h2 class="panel-title">Hamle Defteri</h2>
+            <div class="move-log" id="freeMoveLog">
+              <p class="log-empty">Henüz hamle yok.</p>
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
+      <p class="foot-note" id="freeGameStatus"></p>
+    </main>
+
+  </div>
+
+  <!-- Promotion modal (shared) -->
+  <div class="modal-overlay" id="promoOverlay" hidden>
+    <div class="modal-card">
+      <h3>Terfi edecek taşı seçin</h3>
+      <div class="promo-options" id="promoOptions"></div>
+    </div>
+  </div>
+
+  <script src="chess-engine.js"></script>
+  <script src="openings.js"></script>
+  <script src="bot.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
