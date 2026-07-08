@@ -283,7 +283,6 @@ function advanceIfBookTurn() {
     document.getElementById('lessonInstruction').classList.remove('wrong');
     const step = lessonState.opening.moves[lessonState.plyIndex];
     const base = 'Doğru hamleyi tahtada oynayarak bul.';
-    const tail = 'Takıldıysan "İpucu" veya "Hamleyi Göster" düğmelerini kullanabilirsin.';
     document.getElementById('lessonInstruction').textContent = step && step.goal
       ? `Amaç: ${step.goal} ${base} ${tail}`
       : `${base} ${tail}`;
