@@ -4,6 +4,15 @@
 
 /* ---------- Shared DOM helpers ---------- */
 
+function on(id, event, handler) {
+  const el = document.getElementById(id);
+  if (!el) {
+    console.warn(`[müco31] "${id}" adlı eleman bulunamadı — dosyalar eksik/eski yüklenmiş olabilir.`);
+    return;
+  }
+  el.addEventListener(event, handler);
+}
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 const PIECE_SHAPES = {
@@ -160,14 +169,16 @@ const views = {
 };
 
 function switchView(name) {
-  for (const key in views) views[key].hidden = key !== name;
+  for (const key in views) {
+    if (views[key]) views[key].hidden = key !== name;
+  }
 }
 
 function setActiveTab(mode) {
   document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
 }
 
-document.getElementById('modeTabs').addEventListener('click', (e) => {
+on('modeTabs', 'click', (e) => {
   const btn = e.target.closest('.mode-tab');
   if (!btn) return;
   const mode = btn.dataset.mode;
@@ -269,9 +280,13 @@ function advanceIfBookTurn() {
     }, 550);
   } else {
     document.getElementById('lessonTurnText').textContent = 'Sıra sende';
-    document.getElementById('lessonInstruction').textContent =
-      'Doğru hamleyi tahtada oynayarak bul. Takıldıysan "İpucu" veya "Hamleyi Göster" düğmelerini kullanabilirsin.';
     document.getElementById('lessonInstruction').classList.remove('wrong');
+    if (lessonState.plyIndex === 0) {
+      document.getElementById('lessonInstruction').textContent =
+        'Doğru hamleyi tahtada oynayarak bul. Takıldıysan "İpucu" veya "Hamleyi Göster" düğmelerini kullanabilirsin.';
+    }
+    // plyIndex > 0 iken önceki hamlenin açıklaması ekranda kalmaya devam eder,
+    // böylece kullanıcı okumaya fırsat bulur.
   }
 }
 
@@ -341,7 +356,7 @@ function onLessonSquareClick(r, c) {
   renderLessonBoard();
 }
 
-document.getElementById('lessonHintBtn').addEventListener('click', () => {
+on('lessonHintBtn', 'click', () => {
   if (!lessonState || lessonState.gameState.turn !== lessonState.opening.heroColor) return;
   const step = lessonState.opening.moves[lessonState.plyIndex];
   const move = parseSAN(lessonState.gameState, step.san);
@@ -352,24 +367,24 @@ document.getElementById('lessonHintBtn').addEventListener('click', () => {
   }, 1800);
 });
 
-document.getElementById('lessonShowBtn').addEventListener('click', () => {
+on('lessonShowBtn', 'click', () => {
   if (!lessonState || lessonState.gameState.turn !== lessonState.opening.heroColor) return;
   const step = lessonState.opening.moves[lessonState.plyIndex];
   const move = parseSAN(lessonState.gameState, step.san);
   applyLessonMove(move, step.note, true);
 });
 
-document.getElementById('lessonBackBtn').addEventListener('click', () => {
+on('lessonBackBtn', 'click', () => {
   lessonState = null;
   setActiveTab('lessons');
   switchView('lessons');
 });
 
-document.getElementById('lessonRetryBtn').addEventListener('click', () => {
+on('lessonRetryBtn', 'click', () => {
   if (lessonState) startLesson(lessonState.opening);
 });
 
-document.getElementById('lessonContinueBotBtn').addEventListener('click', () => {
+on('lessonContinueBotBtn', 'click', () => {
   const heroColor = lessonState.opening.heroColor;
   const sanHist = lessonState.opening.moves.slice(0, lessonState.plyIndex).map(m => m.san);
   const startState = lessonState.gameState;
@@ -627,7 +642,7 @@ function popFreeHistoryOnce() {
   freeState.lastRecognizedId = prev.lastRecognizedId;
 }
 
-document.getElementById('freeUndoBtn').addEventListener('click', () => {
+on('freeUndoBtn', 'click', () => {
   if (!freeState || freeState.botThinking || freeState.history.length === 0) return;
   popFreeHistoryOnce();
   if (freeState.gameState.turn !== freeState.humanColor && freeState.history.length > 0) {
@@ -644,11 +659,11 @@ document.getElementById('freeUndoBtn').addEventListener('click', () => {
   updateFreeTurnIndicator();
 });
 
-document.getElementById('freeNewGameBtn').addEventListener('click', () => {
+on('freeNewGameBtn', 'click', () => {
   newFreeGame(freeState ? freeState.humanColor : 'w');
 });
 
-document.getElementById('colorPicker').addEventListener('click', (e) => {
+on('colorPicker', 'click', (e) => {
   const btn = e.target.closest('.color-btn');
   if (!btn) return;
   document.querySelectorAll('#colorPicker .color-btn').forEach(b => b.classList.remove('active'));
@@ -656,7 +671,7 @@ document.getElementById('colorPicker').addEventListener('click', (e) => {
   newFreeGame(btn.dataset.color);
 });
 
-document.getElementById('difficultyPicker').addEventListener('click', (e) => {
+on('difficultyPicker', 'click', (e) => {
   const btn = e.target.closest('.color-btn');
   if (!btn) return;
   document.querySelectorAll('#difficultyPicker .color-btn').forEach(b => b.classList.remove('active'));
@@ -668,6 +683,14 @@ document.getElementById('difficultyPicker').addEventListener('click', (e) => {
    Init
    ============================================================ */
 
-renderOpeningGrid();
-switchView('lessons');
-newFreeGame('w');
+function safeInit(name, fn) {
+  try {
+    fn();
+  } catch (err) {
+    console.error(`[müco31] "${name}" başlatılırken hata oluştu:`, err);
+  }
+}
+
+safeInit('renderOpeningGrid', renderOpeningGrid);
+safeInit('switchView', () => switchView('lessons'));
+safeInit('newFreeGame', () => newFreeGame('w'));
