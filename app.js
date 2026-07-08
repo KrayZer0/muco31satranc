@@ -281,12 +281,12 @@ function advanceIfBookTurn() {
   } else {
     document.getElementById('lessonTurnText').textContent = 'Sıra sende';
     document.getElementById('lessonInstruction').classList.remove('wrong');
-    if (lessonState.plyIndex === 0) {
-      document.getElementById('lessonInstruction').textContent =
-        'Doğru hamleyi tahtada oynayarak bul. Takıldıysan "İpucu" veya "Hamleyi Göster" düğmelerini kullanabilirsin.';
-    }
-    // plyIndex > 0 iken önceki hamlenin açıklaması ekranda kalmaya devam eder,
-    // böylece kullanıcı okumaya fırsat bulur.
+    const step = lessonState.opening.moves[lessonState.plyIndex];
+    const base = 'Doğru hamleyi tahtada oynayarak bul.';
+    const tail = 'Takıldıysan "İpucu" veya "Hamleyi Göster" düğmelerini kullanabilirsin.';
+    document.getElementById('lessonInstruction').textContent = step && step.goal
+      ? `Amaç: ${step.goal} ${base} ${tail}`
+      : `${base} ${tail}`;
   }
 }
 
@@ -309,7 +309,10 @@ function applyLessonMove(move, note, isBook) {
   if (lessonState.plyIndex >= lessonState.opening.moves.length) {
     setTimeout(showLessonDone, 900);
   } else {
-    setTimeout(advanceIfBookTurn, 1500);
+    // Rakibin hamlesinin açıklaması daha uzun ekranda kalsın ki okunabilsin;
+    // kullanıcının kendi doğru hamlesinden sonra geçiş daha hızlı olabilir.
+    const delay = isBook ? 2800 : 1300;
+    setTimeout(advanceIfBookTurn, delay);
   }
 }
 
