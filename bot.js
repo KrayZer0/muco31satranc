@@ -106,7 +106,7 @@ function minimax(state, depth, alpha, beta, maximizing) {
  * Botun rengi için en iyi hamleyi (yakın alternatifler arasından biraz
  * rastgelelikle) hesaplar. depth = kaç yarım hamle ileri bakılacağı.
  */
-function chooseBotMove(state, botColor, depth = 2) {
+function chooseBotMove(state, botColor, depth = 2, margin = 25) {
   const moves = allLegalMoves(state, botColor);
   if (moves.length === 0) return null;
 
@@ -121,7 +121,6 @@ function chooseBotMove(state, botColor, depth = 2) {
   scored.sort((a, b) => maximizing ? b.val - a.val : a.val - b.val);
 
   const bestVal = scored[0].val;
-  const margin = 25; // yakın alternatifleri de göz önünde bulundur (daha "insansı" oyun)
   const topChoices = scored.filter(s => Math.abs(s.val - bestVal) <= margin);
   const pick = topChoices[Math.floor(Math.random() * topChoices.length)];
   return pick.move;

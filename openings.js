@@ -123,6 +123,92 @@ const OPENINGS = [
       { san: 'Nxe4', note: 'Beyaz atıyla geri alır, merkezde aktif bir at bulundurur.' },
       { san: 'Bf5', note: 'Siyahın imza hamlesi: vezir filini piyon zincirinin dışına, erkenden aktif bir kareye çıkarır.' }
     ]
+  },
+  {
+    id: 'scandinavian',
+    name: 'İskandinav Savunması',
+    heroColor: 'b',
+    summary: 'Siyah hemen merkezde değişime gider ve vezirini erken oyuna sokar. Doğrudan ve öğrenmesi kolay bir savunma.',
+    moves: [
+      { san: 'e4', note: 'Beyaz merkezi ele geçirir.' },
+      { san: 'd5', note: 'Siyah hemen merkez piyonuna meydan okur.' },
+      { san: 'exd5', note: 'Beyaz piyonu alır.' },
+      { san: 'Qxd5', note: 'Siyah vezirle geri alır; erken vezir çıkışı riskli olsa da açık bir oyun sağlar.' },
+      { san: 'Nc3', note: 'Beyaz gelişirken tempo kazanır, vezire saldırır.' },
+      { san: 'Qa5', note: 'Vezir güvenli ve aktif bir kareye çekilir, c3 atına dolaylı baskı yapar.' },
+      { san: 'd4', note: 'Beyaz merkezde büyük bir piyon üstünlüğü kurar.' },
+      { san: 'Nf6', note: 'Siyah gelişimine devam eder.' },
+      { san: 'Nf3', note: 'Beyaz da gelişimini tamamlar.' },
+      { san: 'c6', note: 'Siyah vezirine b5 karesi hazırlar ve merkezi destekler.' }
+    ]
+  },
+  {
+    id: 'english',
+    name: 'İngiliz Açılışı',
+    heroColor: 'w',
+    summary: 'Beyaz merkezi kenar piyonuyla kontrol etmeyi tercih eder; esnek ve pozisyonel bir açılış.',
+    moves: [
+      { san: 'c4', note: 'Beyaz merkezi yandan kontrol eder, d5 karesine göz diker.' },
+      { san: 'e5', note: 'Siyah merkezi doğrudan ele geçirir (Ters Sicilya benzeri bir yapı).' },
+      { san: 'Nc3', note: 'Beyaz atını geliştirip e4 ve d5 karelerini kontrol eder.' },
+      { san: 'Nf6', note: 'Siyah da simetrik gelişir.' },
+      { san: 'Nf3', note: 'Beyaz gelişimine devam eder.' },
+      { san: 'Nc6', note: 'Siyah merkezi desteklemeye devam eder.' },
+      { san: 'g3', note: 'Beyaz filini fianketto ile g2 karesine hazırlar; uzun çapraz güçlü bir silah olur.' },
+      { san: 'd5', note: 'Siyah merkezde girişim kurmak ister.' }
+    ]
+  },
+  {
+    id: 'scotch',
+    name: 'Scotch Oyunu',
+    heroColor: 'w',
+    summary: 'Beyaz merkezde erken bir açılım yaparak taşlarına hareket alanı kazandırır; keskin ve doğrudan bir açılış.',
+    moves: [
+      { san: 'e4', note: 'Merkezi ele geçirir.' },
+      { san: 'e5', note: 'Siyah eşit karşılık verir.' },
+      { san: 'Nf3', note: 'At gelişir, e5 piyonuna saldırır.' },
+      { san: 'Nc6', note: 'Siyah e5 piyonunu savunur.' },
+      { san: 'd4', note: 'Scotch\'un karakteristik hamlesi: Beyaz merkezde hemen açılım yapar.' },
+      { san: 'exd4', note: 'Siyah merkez piyonunu alır.' },
+      { san: 'Nxd4', note: 'Beyaz atıyla geri alır, merkezde güçlü bir at bulundurur.' },
+      { san: 'Bc5', note: 'Siyah filini aktif bir kareye çıkarır ve d4 atına baskı yapar.' }
+    ]
+  },
+  {
+    id: 'vienna',
+    name: 'Viyana Oyunu',
+    heroColor: 'w',
+    summary: 'İtalyan ve Ruy Lopez\'e alternatif, atı erken c3 yerine c3 atına çıkaran esnek bir açılış.',
+    moves: [
+      { san: 'e4', note: 'Merkezi ele geçirir.' },
+      { san: 'e5', note: 'Siyah eşit karşılık verir.' },
+      { san: 'Nc3', note: 'Beyaz atını Nf3 yerine önce c3\'e geliştirir; f4 hamlesine esneklik bırakır.' },
+      { san: 'Nf6', note: 'Siyah e4 piyonuna baskı yaparak gelişimine devam eder.' },
+      { san: 'g3', note: 'Beyaz filini fianketto ile geliştirmeye hazırlanır.' },
+      { san: 'd5', note: 'Siyah merkezde girişim kurmak ister.' },
+      { san: 'exd5', note: 'Beyaz merkez piyonunu değişir.' },
+      { san: 'Nxd5', note: 'Siyah atıyla geri alır, merkezde aktif bir at bulundurur.' }
+    ]
+  },
+  {
+    id: 'petrov',
+    name: 'Petrov Savunması',
+    heroColor: 'b',
+    summary: 'Siyah simetrik oynayarak dengeyi korur; çok sağlam ama biraz pasif kabul edilen klasik bir savunma.',
+    moves: [
+      { san: 'e4', note: 'Beyaz merkezi ele geçirir.' },
+      { san: 'e5', note: 'Siyah eşit karşılık verir.' },
+      { san: 'Nf3', note: 'Beyaz e5 piyonuna saldırır.' },
+      { san: 'Nf6', note: 'Siyah, piyonu savunmak yerine aynı şekilde karşı saldırıya geçer.' },
+      { san: 'Nxe5', note: 'Beyaz piyonu alır.' },
+      { san: 'd6', note: 'Siyah atı geri çekilmeye zorlar.' },
+      { san: 'Nf3', note: 'Beyaz at güvenli bir kareye döner.' },
+      { san: 'Nxe4', note: 'Siyah da simetrik olarak merkez piyonunu alır; pozisyon dengelenir.' },
+      { san: 'd4', note: 'Beyaz merkezde büyük bir piyon üstünlüğü kurar.' },
+      { san: 'd5', note: 'Siyah merkezi sağlam şekilde destekler.' },
+      { san: 'Bd3', note: 'Beyaz filini aktif bir kareye çıkarır.' },
+      { san: 'Nc6', note: 'Siyah gelişimine devam eder.' }
+    ]
   }
 ];
 

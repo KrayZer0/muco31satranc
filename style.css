@@ -447,6 +447,12 @@ body {
   margin-bottom: 14px;
 }
 
+.difficulty-picker {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
 .color-btn {
   flex: 1;
   background: transparent;
@@ -458,6 +464,24 @@ body {
   background: var(--accent);
   color: #201408;
   border-color: var(--accent);
+}
+
+.site-footer {
+  text-align: center;
+  margin: 40px auto 0;
+  max-width: 1180px;
+  padding: 18px 24px 0;
+  border-top: 1px solid var(--panel-line);
+}
+
+.site-footer a {
+  color: var(--text-dim);
+  font-size: 12.5px;
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: var(--accent);
 }
 
 .turn-indicator {
