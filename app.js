@@ -376,7 +376,7 @@ document.getElementById('lessonContinueBotBtn').addEventListener('click', () => 
 
   setActiveTab('freeplay');
   switchView('freeplay');
-  document.querySelectorAll('.color-btn').forEach(b => b.classList.toggle('active', b.dataset.color === heroColor));
+  document.querySelectorAll('#colorPicker .color-btn').forEach(b => b.classList.toggle('active', b.dataset.color === heroColor));
   newFreeGame(heroColor, startState, sanHist);
 });
 
@@ -385,6 +385,13 @@ document.getElementById('lessonContinueBotBtn').addEventListener('click', () => 
    ============================================================ */
 
 let freeState = null;
+let currentDifficulty = 'medium';
+
+const DIFFICULTY_SETTINGS = {
+  easy: { depth: 1, margin: 80 },
+  medium: { depth: 2, margin: 35 },
+  hard: { depth: 3, margin: 10 },
+};
 
 function newFreeGame(humanColor, initialState, initialSanHistory) {
   const sanHistory = initialSanHistory ? [...initialSanHistory] : [];
@@ -600,7 +607,8 @@ function maybeTriggerBotMove() {
   setTimeout(() => {
     if (!freeState) return;
     const botColor = freeState.gameState.turn;
-    const move = chooseBotMove(freeState.gameState, botColor, 3);
+    const settings = DIFFICULTY_SETTINGS[currentDifficulty] || DIFFICULTY_SETTINGS.medium;
+    const move = chooseBotMove(freeState.gameState, botColor, settings.depth, settings.margin);
     freeState.botThinking = false;
     if (move) {
       finalizeFreeMove(move);
@@ -643,9 +651,17 @@ document.getElementById('freeNewGameBtn').addEventListener('click', () => {
 document.getElementById('colorPicker').addEventListener('click', (e) => {
   const btn = e.target.closest('.color-btn');
   if (!btn) return;
-  document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#colorPicker .color-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   newFreeGame(btn.dataset.color);
+});
+
+document.getElementById('difficultyPicker').addEventListener('click', (e) => {
+  const btn = e.target.closest('.color-btn');
+  if (!btn) return;
+  document.querySelectorAll('#difficultyPicker .color-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentDifficulty = btn.dataset.difficulty;
 });
 
 /* ============================================================
