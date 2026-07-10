@@ -425,12 +425,19 @@ body {
 .lesson-instruction {
   font-size: 14.5px;
   line-height: 1.55;
-  margin: 0 0 16px;
+  margin: 0 0 10px;
   min-height: 44px;
 }
 
 .lesson-instruction.wrong {
   color: var(--danger);
+}
+
+.lesson-instruction-tip {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  margin: 0 0 16px;
 }
 
 .lesson-actions {

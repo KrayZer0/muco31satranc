@@ -264,6 +264,11 @@ function renderLessonBoard() {
   updateCoords('lessonFiles', 'lessonRanks', lessonState.opening.heroColor);
 }
 
+function setLessonInstruction(main, tip) {
+  document.getElementById('lessonInstruction').textContent = main;
+  document.getElementById('lessonInstructionTip').textContent = tip || '';
+}
+
 function advanceIfBookTurn() {
   if (lessonState.plyIndex >= lessonState.opening.moves.length) {
     showLessonDone();
@@ -271,7 +276,7 @@ function advanceIfBookTurn() {
   }
   if (lessonState.gameState.turn !== lessonState.opening.heroColor) {
     document.getElementById('lessonTurnText').textContent = 'Rakip oynuyor…';
-    document.getElementById('lessonInstruction').textContent = '…';
+    setLessonInstruction('…');
     document.getElementById('lessonInstruction').classList.remove('wrong');
     setTimeout(() => {
       const step = lessonState.opening.moves[lessonState.plyIndex];
@@ -282,10 +287,11 @@ function advanceIfBookTurn() {
     document.getElementById('lessonTurnText').textContent = 'Sıra sende';
     document.getElementById('lessonInstruction').classList.remove('wrong');
     const step = lessonState.opening.moves[lessonState.plyIndex];
-    const tail = 'Bu fikri uygulayan hamleyi tahtada bul. Takıldıysan "İpucu" veya "Hamleyi Göster" düğmelerini kullanabilirsin.';
-    document.getElementById('lessonInstruction').textContent = step
-      ? `${step.note} ${tail}`
-      : `Doğru hamleyi tahtada oynayarak bul. ${tail}`;
+    const tip = 'Takıldıysan "İpucu" veya "Hamleyi Göster" düğmelerini kullanabilirsin.';
+    setLessonInstruction(
+      step ? `${step.note} Bu fikri uygulayan hamleyi tahtada bul.` : 'Doğru hamleyi tahtada oynayarak bul.',
+      tip
+    );
   }
 }
 
@@ -302,7 +308,7 @@ function applyLessonMove(move, note, isBook) {
   renderLessonProgress();
 
   document.getElementById('lessonTurnText').textContent = isBook ? 'Açıklama' : 'Doğru! 👍';
-  document.getElementById('lessonInstruction').textContent = note;
+  setLessonInstruction(note);
   document.getElementById('lessonInstruction').classList.remove('wrong');
 
   if (lessonState.plyIndex >= lessonState.opening.moves.length) {
@@ -338,8 +344,7 @@ function onLessonSquareClick(r, c) {
     if (isCorrect) {
       applyLessonMove(targetMove, step.note, false);
     } else {
-      document.getElementById('lessonInstruction').textContent =
-        'Bu hamle teorik devam değil. Tekrar dene ya da "İpucu" iste.';
+      setLessonInstruction('Bu hamle teorik devam değil. Tekrar dene ya da "İpucu" iste.');
       document.getElementById('lessonInstruction').classList.add('wrong');
       lessonState.selected = null;
       lessonState.legalForSelected = [];
