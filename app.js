@@ -282,10 +282,10 @@ function advanceIfBookTurn() {
     document.getElementById('lessonTurnText').textContent = 'Sıra sende';
     document.getElementById('lessonInstruction').classList.remove('wrong');
     const step = lessonState.opening.moves[lessonState.plyIndex];
-    const base = 'Doğru hamleyi tahtada oynayarak bul.';
-    document.getElementById('lessonInstruction').textContent = step && step.goal
-      ? `Amaç: ${step.goal} ${base} ${tail}`
-      : `${base} ${tail}`;
+    const tail = 'Bu fikri uygulayan hamleyi tahtada bul. Takıldıysan "İpucu" veya "Hamleyi Göster" düğmelerini kullanabilirsin.';
+    document.getElementById('lessonInstruction').textContent = step
+      ? `${step.note} ${tail}`
+      : `Doğru hamleyi tahtada oynayarak bul. ${tail}`;
   }
 }
 
