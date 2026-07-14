@@ -67,6 +67,7 @@
       <nav class="mode-tabs" id="modeTabs">
         <button class="mode-tab active" data-mode="lessons">Dersler</button>
         <button class="mode-tab" data-mode="freeplay">Serbest Oyun</button>
+        <button class="mode-tab" data-mode="online">Çevrimiçi</button>
       </nav>
     </header>
 
@@ -187,6 +188,82 @@
       <p class="foot-note" id="freeGameStatus"></p>
     </main>
 
+    <!-- ================= ONLINE PLAY ================= -->
+    <main class="view" id="view-online" hidden>
+
+      <div id="onlineLobby" class="online-lobby">
+        <div class="panel-card online-lobby-card">
+          <h2 class="panel-title">Çevrimiçi Oyun</h2>
+          <p class="view-intro" style="margin-bottom:20px;">Bir arkadaşına karşı gerçek zamanlı oyna. Oda oluştur ve kodu paylaş, ya da sana verilen kodla bir odaya katıl.</p>
+
+          <button class="btn-primary" id="createRoomBtn" style="width:100%; margin-bottom:22px;">Yeni Oda Oluştur</button>
+
+          <div class="online-divider"><span>veya</span></div>
+
+          <div class="online-join-row">
+            <input type="text" id="joinRoomInput" placeholder="Oda kodunu gir" maxlength="6" />
+            <button class="btn-ghost" id="joinRoomBtn">Katıl</button>
+          </div>
+
+          <p class="online-error" id="onlineError"></p>
+        </div>
+      </div>
+
+      <div id="onlineWaiting" class="online-lobby" hidden>
+        <div class="panel-card online-lobby-card">
+          <h2 class="panel-title">Oda Hazır</h2>
+          <p class="view-intro">Bu kodu arkadaşınla paylaş, katılmasını bekle:</p>
+          <div class="room-code-display" id="roomCodeDisplay">-----</div>
+          <button class="btn-ghost" id="copyRoomCodeBtn" style="width:100%;">Kodu Kopyala</button>
+          <p class="waiting-hint">Rakip bekleniyor…</p>
+          <button class="btn-ghost" id="cancelWaitingBtn" style="width:100%; margin-top:10px;">Vazgeç</button>
+        </div>
+      </div>
+
+      <div id="onlineGameArea" class="layout" hidden>
+
+        <section class="board-wrap">
+          <div class="board-frame">
+            <div class="coords coords-files" id="onlineFiles"></div>
+            <div class="coords coords-ranks" id="onlineRanks"></div>
+            <div class="board" id="onlineBoard" role="grid" aria-label="Çevrimiçi tahta"></div>
+          </div>
+          <p class="board-caption" id="onlineStatus">Rakip bekleniyor…</p>
+        </section>
+
+        <aside class="side-panel">
+
+          <div class="panel-card">
+            <h2 class="panel-title">Oda</h2>
+            <p class="online-meta">Kod: <strong id="onlineRoomLabel">-----</strong></p>
+            <p class="online-meta">Sen: <strong id="onlineYourColor">-</strong> oynuyorsun</p>
+            <button class="btn-ghost" id="leaveRoomBtn" style="width:100%; margin-top:10px;">Odadan Ayrıl</button>
+          </div>
+
+          <div class="panel-card captured-card">
+            <h2 class="panel-title">Alınan Taşlar</h2>
+            <div class="captured-row">
+              <span class="captured-label">Beyaz aldı</span>
+              <div class="captured-pieces" id="onlineCapturedByWhite"></div>
+            </div>
+            <div class="captured-row">
+              <span class="captured-label">Siyah aldı</span>
+              <div class="captured-pieces" id="onlineCapturedByBlack"></div>
+            </div>
+          </div>
+
+          <div class="panel-card log-card">
+            <h2 class="panel-title">Hamle Defteri</h2>
+            <div class="move-log" id="onlineMoveLog">
+              <p class="log-empty">Henüz hamle yok.</p>
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
+    </main>
+
   </div>
 
   <footer class="site-footer">
@@ -201,9 +278,13 @@
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
   <script src="chess-engine.js"></script>
   <script src="openings.js"></script>
   <script src="bot.js"></script>
   <script src="app.js"></script>
+  <script src="online.js"></script>
 </body>
 </html>

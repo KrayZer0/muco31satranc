@@ -166,6 +166,7 @@ const views = {
   lessons: document.getElementById('view-lessons'),
   lessonPlay: document.getElementById('view-lessonPlay'),
   freeplay: document.getElementById('view-freeplay'),
+  online: document.getElementById('view-online'),
 };
 
 function switchView(name) {
@@ -183,7 +184,7 @@ on('modeTabs', 'click', (e) => {
   if (!btn) return;
   const mode = btn.dataset.mode;
   setActiveTab(mode);
-  switchView(mode === 'lessons' ? 'lessons' : 'freeplay');
+  switchView(mode);
 });
 
 /* ============================================================

@@ -754,3 +754,107 @@ body {
     padding: clamp(14px, 5vw, 20px) clamp(10px, 4vw, 16px) clamp(10px, 4vw, 16px) clamp(14px, 5vw, 20px);
   }
 }
+
+/* ---------- Online play ---------- */
+
+.online-lobby {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0 60px;
+}
+
+.online-lobby-card {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.online-lobby-card .view-intro {
+  text-align: left;
+  margin: 0;
+}
+
+.online-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-dim);
+  font-size: 12px;
+  margin-bottom: 18px;
+}
+
+.online-divider::before,
+.online-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--panel-line);
+}
+
+.online-join-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.online-join-row input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--panel-line);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.online-join-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.online-error {
+  min-height: 18px;
+  color: var(--danger);
+  font-size: 13px;
+  margin: 6px 0 0;
+}
+
+.room-code-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  background: var(--bg);
+  border: 1px dashed var(--panel-line);
+  border-radius: 10px;
+  padding: 18px 10px;
+  margin: 16px 0;
+}
+
+.waiting-hint {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin: 14px 0 0;
+  animation: pulse 1.4s infinite ease-in-out;
+}
+
+.online-meta {
+  font-size: 13.5px;
+  color: var(--text-dim);
+  margin: 0 0 6px;
+}
+
+.online-meta strong {
+  color: var(--text);
+}
+
+@media (max-width: 600px) {
+  .online-join-row {
+    flex-direction: column;
+  }
+}
