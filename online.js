@@ -50,6 +50,7 @@ function resetOnlineLocalState() {
     playersRef: null,
     gameState: freshState(),
     sanHistory: [],
+    moveDescriptors: [],
     capturedByColor: { w: [], b: [] },
     lastMove: null,
     selected: null,
@@ -72,6 +73,7 @@ function showOnlineLobby() {
   document.getElementById('onlineLobby').hidden = false;
   document.getElementById('onlineWaiting').hidden = true;
   document.getElementById('onlineGameArea').hidden = true;
+  document.getElementById('onlineAnalysis').hidden = true;
   showOnlineError('');
   const input = document.getElementById('joinRoomInput');
   if (input) input.value = '';
@@ -249,6 +251,7 @@ function replayOnlineMoves(moveDescriptors) {
   onlineState.sanHistory = sanHistory;
   onlineState.capturedByColor = capturedByColor;
   onlineState.lastMove = lastMove;
+  onlineState.moveDescriptors = moveDescriptors;
   onlineState.selected = null;
   onlineState.legalForSelected = [];
 
@@ -370,4 +373,100 @@ function pushOnlineMove(move) {
   });
   // Not: yerel durumu burada değiştirmiyoruz — yukarıdaki 'value' dinleyicisi
   // hem bizim hem rakibin hamlesini aynı yoldan işleyip senkron kalmamızı sağlıyor.
+}
+
+/* ---------- Game analysis ---------- */
+
+on('analyzeGameBtn', 'click', () => {
+  if (!onlineState.moveDescriptors || onlineState.moveDescriptors.length === 0) return;
+  showAnalysisView();
+});
+
+on('closeAnalysisBtn', 'click', () => {
+  hideAnalysisView();
+});
+
+function showAnalysisView() {
+  document.getElementById('onlineGameArea').hidden = true;
+  document.getElementById('onlineAnalysis').hidden = false;
+  document.getElementById('analysisSummary').innerHTML = '<p class="log-empty">Analiz ediliyor…</p>';
+  document.getElementById('analysisMoveList').innerHTML = '';
+  document.getElementById('analysisGraph').innerHTML = '';
+
+  const descriptors = onlineState.moveDescriptors.slice();
+  setTimeout(() => {
+    const result = analyzeGame(descriptors, { depth: 1 });
+    renderAnalysisSummary(result.stats);
+    renderAnalysisGraph(result.evalTrend);
+    renderAnalysisMoveList(result.perMove);
+  }, 30);
+}
+
+function hideAnalysisView() {
+  document.getElementById('onlineAnalysis').hidden = true;
+  document.getElementById('onlineGameArea').hidden = false;
+}
+
+function renderAnalysisSummary(stats) {
+  const el = document.getElementById('analysisSummary');
+  const build = (color, label) => {
+    const s = stats[color];
+    const avg = s.count ? s.totalLoss / s.count : 0;
+    const accuracy = s.count ? Math.max(0, Math.min(100, Math.round(100 - avg / 8))) : 100;
+    return `
+      <div class="analysis-card">
+        <h3>${label}</h3>
+        <p class="analysis-accuracy">${accuracy}<span>%</span></p>
+        <p class="analysis-accuracy-label">tahmini doğruluk</p>
+        <ul class="analysis-stats-list">
+          <li><span class="dot best"></span>En iyi: ${s.best}</li>
+          <li><span class="dot good"></span>İyi: ${s.good}</li>
+          <li><span class="dot inaccuracy"></span>Hassas nokta: ${s.inaccuracy}</li>
+          <li><span class="dot mistake"></span>Hata: ${s.mistake}</li>
+          <li><span class="dot blunder"></span>Ciddi hata: ${s.blunder}</li>
+        </ul>
+      </div>`;
+  };
+  el.innerHTML = build('w', 'Beyaz') + build('b', 'Siyah');
+}
+
+function renderAnalysisGraph(evalTrend) {
+  const svg = document.getElementById('analysisGraph');
+  const width = 600, height = 160, midY = height / 2;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const scale = 0.11;
+  const n = evalTrend.length;
+  const stepX = n > 1 ? width / (n - 1) : width;
+
+  const points = evalTrend.map((v, i) => {
+    const x = i * stepX;
+    const y = clamp(midY - v * scale, 6, height - 6);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+
+  const areaPoints = `0,${midY} ${points} ${width},${midY}`;
+
+  svg.innerHTML = `
+    <polygon points="${areaPoints}" style="fill:var(--accent-dim);stroke:none;" />
+    <line x1="0" y1="${midY}" x2="${width}" y2="${midY}" style="stroke:var(--panel-line);stroke-width:1" />
+    <polyline points="${points}" style="fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round" />
+  `;
+}
+
+function renderAnalysisMoveList(perMove) {
+  const el = document.getElementById('analysisMoveList');
+  if (perMove.length === 0) {
+    el.innerHTML = '<p class="log-empty">Analiz edilecek hamle yok.</p>';
+    return;
+  }
+  el.innerHTML = perMove.map(m => {
+    const moveNo = Math.ceil(m.ply / 2);
+    const label = m.color === 'w' ? `${moveNo}.` : `${moveNo}…`;
+    return `
+      <div class="analysis-move-row ${m.classification.tag}">
+        <span class="analysis-move-num">${label}</span>
+        <span class="analysis-move-san">${m.san}</span>
+        <span class="analysis-move-tag">${m.classification.icon} ${m.classification.label}</span>
+      </div>`;
+  }).join('');
 }

@@ -237,7 +237,8 @@
             <h2 class="panel-title">Oda</h2>
             <p class="online-meta">Kod: <strong id="onlineRoomLabel">-----</strong></p>
             <p class="online-meta">Sen: <strong id="onlineYourColor">-</strong> oynuyorsun</p>
-            <button class="btn-ghost" id="leaveRoomBtn" style="width:100%; margin-top:10px;">Odadan Ayrıl</button>
+            <button class="btn-ghost" id="analyzeGameBtn" style="width:100%; margin-top:10px;">Oyunu Analiz Et</button>
+            <button class="btn-ghost" id="leaveRoomBtn" style="width:100%; margin-top:8px;">Odadan Ayrıl</button>
           </div>
 
           <div class="panel-card captured-card">
@@ -262,6 +263,31 @@
         </aside>
 
       </div>
+
+      <div id="onlineAnalysis" class="analysis-view" hidden>
+        <div class="panel-card">
+          <div class="analysis-header">
+            <h2 class="panel-title">Oyun Analizi</h2>
+            <button class="btn-ghost" id="closeAnalysisBtn">← Oyuna Dön</button>
+          </div>
+          <p class="analysis-disclaimer">
+            Bu analiz, sitenin kendi basit motoruna dayanır; profesyonel motorlar (Stockfish vb.) kadar güçlü değildir
+            ama genel eğilimi ve göze çarpan hataları göstermek için yeterlidir.
+          </p>
+
+          <div class="analysis-summary" id="analysisSummary"></div>
+
+          <div class="analysis-graph-wrap">
+            <svg id="analysisGraph" viewBox="0 0 600 160" class="analysis-graph" preserveAspectRatio="none"></svg>
+            <div class="analysis-graph-labels">
+              <span>Beyaz avantajlı</span>
+              <span>Siyah avantajlı</span>
+            </div>
+          </div>
+
+          <div class="analysis-move-list" id="analysisMoveList"></div>
+        </div>
+      </div>
     </main>
 
   </div>
@@ -284,6 +310,7 @@
   <script src="chess-engine.js"></script>
   <script src="openings.js"></script>
   <script src="bot.js"></script>
+  <script src="analysis.js"></script>
   <script src="app.js"></script>
   <script src="online.js"></script>
 </body>
