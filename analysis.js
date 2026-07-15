@@ -79,3 +79,66 @@ function analyzeGame(moveDescriptors, options) {
 
   return { perMove, stats, evalTrend, finalState: state };
 }
+
+/**
+ * Gerçek Stockfish motoruyla oyun analizi. Her hamle için:
+ * 1) O pozisyonda motorun bulabildiği en iyi değerlendirme,
+ * 2) Oynanan hamleden sonraki pozisyonun değerlendirmesi
+ * karşılaştırılarak bir "kayıp" (loss) hesaplanır.
+ * Stockfish kullanılamıyorsa çağıran taraf analyzeGame()'e (temel motor) düşmeli.
+ */
+async function analyzeGameWithStockfish(moveDescriptors, options, onProgress) {
+  const depth = (options && options.depth) || 8;
+  let state = freshState();
+
+  const perMove = [];
+  const stats = {
+    w: { best: 0, good: 0, inaccuracy: 0, mistake: 0, blunder: 0, totalLoss: 0, count: 0 },
+    b: { best: 0, good: 0, inaccuracy: 0, mistake: 0, blunder: 0, totalLoss: 0, count: 0 },
+  };
+  const evalTrend = [0];
+
+  for (let i = 0; i < moveDescriptors.length; i++) {
+    const desc = moveDescriptors[i];
+    const color = state.turn;
+
+    const legal = legalMovesForPiece(state, desc.r1, desc.c1);
+    const playedMove = legal.find(m => m.to.r === desc.r2 && m.to.c === desc.c2 &&
+      (desc.promotion ? m.promotion === desc.promotion : !m.promotion));
+    if (!playedMove) break;
+
+    const fenBefore = stateToFEN(state);
+    const beforeResult = await analyzeFenWithStockfish(fenBefore, depth);
+    const bestEval = beforeResult.evalCp; // mover perspektifinden (UCI kuralı)
+
+    const preMoveState = state;
+    const { state: next } = applyMove(state, playedMove);
+
+    const fenAfter = stateToFEN(next);
+    const afterResult = await analyzeFenWithStockfish(fenAfter, depth);
+    const evalAfterMoverPerspective = -afterResult.evalCp; // sıra karşı tarafa geçti
+
+    const loss = Math.max(0, bestEval - evalAfterMoverPerspective);
+    const cls = classifyMoveLoss(loss);
+
+    const opponent = next.turn;
+    const opponentMoves = allLegalMoves(next, opponent);
+    const inCheck = isInCheck(next.board, opponent);
+    const isMate = inCheck && opponentMoves.length === 0;
+    const san = moveToNotation(preMoveState, playedMove, inCheck, isMate);
+
+    perMove.push({ ply: i + 1, color, san, loss: Math.round(loss), classification: cls });
+
+    stats[color].count++;
+    stats[color].totalLoss += loss;
+    stats[color][cls.tag]++;
+
+    const whiteEval = next.turn === 'w' ? afterResult.evalCp : -afterResult.evalCp;
+    evalTrend.push(whiteEval);
+
+    state = next;
+    if (onProgress) onProgress(i + 1, moveDescriptors.length);
+  }
+
+  return { perMove, stats, evalTrend, finalState: state };
+}

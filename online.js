@@ -389,17 +389,52 @@ on('closeAnalysisBtn', 'click', () => {
 function showAnalysisView() {
   document.getElementById('onlineGameArea').hidden = true;
   document.getElementById('onlineAnalysis').hidden = false;
-  document.getElementById('analysisSummary').innerHTML = '<p class="log-empty">Analiz ediliyor…</p>';
+  document.getElementById('analysisSummary').innerHTML = '<p class="log-empty">Motor yükleniyor…</p>';
   document.getElementById('analysisMoveList').innerHTML = '';
   document.getElementById('analysisGraph').innerHTML = '';
+  setAnalysisEngineNote('checking');
 
   const descriptors = onlineState.moveDescriptors.slice();
-  setTimeout(() => {
-    const result = analyzeGame(descriptors, { depth: 1 });
+
+  loadStockfish().then(() => {
+    document.getElementById('analysisSummary').innerHTML =
+      `<p class="log-empty">Stockfish ile analiz ediliyor… (0/${descriptors.length})</p>`;
+    setAnalysisEngineNote('stockfish');
+
+    return analyzeGameWithStockfish(descriptors, { depth: 8 }, (done, total) => {
+      const el = document.getElementById('analysisSummary');
+      if (el.querySelector('.log-empty')) {
+        el.innerHTML = `<p class="log-empty">Stockfish ile analiz ediliyor… (${done}/${total})</p>`;
+      }
+    });
+  }).then(result => {
+    if (!result) return;
     renderAnalysisSummary(result.stats);
     renderAnalysisGraph(result.evalTrend);
     renderAnalysisMoveList(result.perMove);
-  }, 30);
+  }).catch(err => {
+    console.warn('[müco31] Stockfish kullanılamadı, temel motora geçiliyor:', err);
+    setAnalysisEngineNote('basic');
+    document.getElementById('analysisSummary').innerHTML = '<p class="log-empty">Temel motorla analiz ediliyor…</p>';
+    setTimeout(() => {
+      const result = analyzeGame(descriptors, { depth: 1 });
+      renderAnalysisSummary(result.stats);
+      renderAnalysisGraph(result.evalTrend);
+      renderAnalysisMoveList(result.perMove);
+    }, 30);
+  });
+}
+
+function setAnalysisEngineNote(kind) {
+  const el = document.getElementById('analysisDisclaimer');
+  if (!el) return;
+  if (kind === 'stockfish') {
+    el.textContent = 'Bu analiz gerçek Stockfish motoruyla (derinlik 8) yapılıyor. Uzun oyunlarda biraz sürebilir, lütfen bekleyin.';
+  } else if (kind === 'basic') {
+    el.textContent = 'Stockfish yüklenemedi (bağlantı sorunu olabilir), sitenin kendi basit motoruyla analiz ediliyor. Bu, profesyonel bir motor kadar güçlü değildir.';
+  } else {
+    el.textContent = 'Gelişmiş motor (Stockfish) yükleniyor…';
+  }
 }
 
 function hideAnalysisView() {

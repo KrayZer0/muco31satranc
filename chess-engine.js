@@ -380,6 +380,37 @@ function moveToNotation(state, move, isCheck, isMate) {
 
 /* ---------- SAN parsing (for opening-book playback) ---------- */
 
+/* ---------- FEN (Stockfish/UCI motoruyla haberleşmek için) ---------- */
+
+function stateToFEN(state) {
+  const rows = [];
+  for (let r = 0; r < 8; r++) {
+    let row = '';
+    let empty = 0;
+    for (let c = 0; c < 8; c++) {
+      const p = state.board[r][c];
+      if (!p) { empty++; continue; }
+      if (empty > 0) { row += empty; empty = 0; }
+      const letter = p.type.toLowerCase();
+      row += p.color === 'w' ? letter.toUpperCase() : letter;
+    }
+    if (empty > 0) row += empty;
+    rows.push(row);
+  }
+  const boardPart = rows.join('/');
+
+  let castlingPart = '';
+  if (state.castling.w.king) castlingPart += 'K';
+  if (state.castling.w.queen) castlingPart += 'Q';
+  if (state.castling.b.king) castlingPart += 'k';
+  if (state.castling.b.queen) castlingPart += 'q';
+  if (!castlingPart) castlingPart = '-';
+
+  const epPart = state.enPassant ? squareName(state.enPassant.r, state.enPassant.c) : '-';
+
+  return `${boardPart} ${state.turn} ${castlingPart} ${epPart} 0 1`;
+}
+
 function parseSAN(state, sanStrRaw) {
   const sanStr = sanStrRaw.trim();
   const color = state.turn;
