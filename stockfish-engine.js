@@ -39,27 +39,20 @@ function loadStockfish() {
 
     const res = await fetch(engineUrl);
     if (!res.ok) throw new Error('Motor dosyası indirilemedi: HTTP ' + res.status);
-    const engineCode = await res.text();
+    const rawCode = await res.text();
 
-    // ÖNEMLİ: Bu kod bir Blob URL'den worker olarak çalıştığı için,
-    // motorun .wasm dosyasını göreceli bir yoldan bulmaya çalışması
-    // başarısız olur (blob'un "konumu" anlamsızdır). Bunu kesin
-    // çözmek için Module.instantiateWasm kancasını kullanıp .wasm
-    // baytlarını doğrudan CDN'in mutlak adresinden kendimiz çekiyoruz.
-    // Bu, Emscripten'in resmi ve en güvenilir özelleştirme noktasıdır.
+    // ÖNEMLİ: Bu motor derlemesi .wasm dosyasını düz, göreceli bir metin
+    // sabiti olarak ("stockfish.wasm") arıyor; Module.locateFile/instantiateWasm
+    // kancalarını dinlemiyor. Bunu kesin çözmek için kaynak kodun İÇİNDEKİ
+    // bu metni, çalışmadan önce, doğrudan tam CDN adresiyle değiştiriyoruz.
+    const engineCode = rawCode.replace(/(['"])stockfish\.wasm\1/g, `$1${wasmUrl}$1`);
+
+    // Ek güvenlik: klasik Module kancalarını da tanımlayalım (zararı olmaz,
+    // bu derleme kullanmasa bile başka bir derleme kullanabilir).
     const prefix = `
       var Module = (typeof Module !== 'undefined') ? Module : {};
-      Module.locateFile = function (path) { return '${STOCKFISH_BASE_URL}' + path; };
-      Module.instantiateWasm = function (imports, successCallback) {
-        fetch('${wasmUrl}')
-          .then(function (response) {
-            if (!response.ok) throw new Error('wasm indirilemedi: ' + response.status);
-            return response.arrayBuffer();
-          })
-          .then(function (bytes) { return WebAssembly.instantiate(bytes, imports); })
-          .then(function (result) { successCallback(result.instance, result.module); })
-          .catch(function (err) { self.postMessage('__sf_wasm_error__ ' + err.message); });
-        return {};
+      Module.locateFile = function (path) {
+        return path.indexOf('http') === 0 ? path : '${STOCKFISH_BASE_URL}' + path;
       };
     `;
 
@@ -76,12 +69,6 @@ function loadStockfish() {
 
       function onMsg(e) {
         const line = typeof e.data === 'string' ? e.data : '';
-        if (line.indexOf('__sf_wasm_error__') === 0) {
-          clearTimeout(timeout);
-          worker.removeEventListener('message', onMsg);
-          reject(new Error('WASM yüklenemedi: ' + line.replace('__sf_wasm_error__ ', '')));
-          return;
-        }
         if (line === 'uciok') {
           worker.postMessage('isready');
         } else if (line === 'readyok') {
