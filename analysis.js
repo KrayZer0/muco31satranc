@@ -88,7 +88,7 @@ function analyzeGame(moveDescriptors, options) {
  * Stockfish kullanılamıyorsa çağıran taraf analyzeGame()'e (temel motor) düşmeli.
  */
 async function analyzeGameWithStockfish(moveDescriptors, options, onProgress) {
-  const depth = (options && options.depth) || 8;
+  const movetimeMs = (options && options.movetime) || 500;
   let state = freshState();
 
   const perMove = [];
@@ -108,14 +108,14 @@ async function analyzeGameWithStockfish(moveDescriptors, options, onProgress) {
     if (!playedMove) break;
 
     const fenBefore = stateToFEN(state);
-    const beforeResult = await analyzeFenWithStockfish(fenBefore, depth);
+    const beforeResult = await analyzeFenWithStockfish(fenBefore, movetimeMs);
     const bestEval = beforeResult.evalCp; // mover perspektifinden (UCI kuralı)
 
     const preMoveState = state;
     const { state: next } = applyMove(state, playedMove);
 
     const fenAfter = stateToFEN(next);
-    const afterResult = await analyzeFenWithStockfish(fenAfter, depth);
+    const afterResult = await analyzeFenWithStockfish(fenAfter, movetimeMs);
     const evalAfterMoverPerspective = -afterResult.evalCp; // sıra karşı tarafa geçti
 
     const loss = Math.max(0, bestEval - evalAfterMoverPerspective);

@@ -85,6 +85,7 @@ function loadStockfish() {
       worker.postMessage('uci');
     });
 
+    worker.postMessage('ucinewgame');
     sfWorker = worker;
     return worker;
   })();
@@ -93,19 +94,30 @@ function loadStockfish() {
 }
 
 /**
- * Verilen FEN pozisyonunu belirli bir derinliğe kadar analiz eder.
+ * Verilen FEN pozisyonunu belirli bir süre (ms) boyunca analiz eder.
+ * "go depth N" yerine "go movetime N" kullanıyoruz çünkü bu, motorun
+ * kesin olarak ne zaman cevap vermesi gerektiğini garanti eder — bazı
+ * motor derlemeleri "depth" limitini güvenilir şekilde desteklemiyor.
  * Sonuç, o pozisyonda sırası gelen tarafın perspektifinden bir
  * centipawn değeri (evalCp) ve varsa mat sayısı (mateIn) döndürür.
  */
-function analyzeFenWithStockfish(fen, depth) {
+function analyzeFenWithStockfish(fen, movetimeMs) {
   return new Promise((resolve, reject) => {
     if (!sfWorker) { reject(new Error('Motor hazır değil.')); return; }
 
     let lastScore = { evalCp: 0, mateIn: null };
-    const timeout = setTimeout(() => {
+    let stopped = false;
+
+    // Motor movetime'a tam uymazsa, yine de zorla durdurmayı deneriz.
+    const stopTimer = setTimeout(() => {
+      stopped = true;
+      sfWorker.postMessage('stop');
+    }, movetimeMs + 2000);
+
+    const hardTimeout = setTimeout(() => {
       sfWorker.removeEventListener('message', onMsg);
       reject(new Error('Analiz zaman aşımına uğradı.'));
-    }, 20000);
+    }, movetimeMs + 8000);
 
     function onMsg(e) {
       const line = typeof e.data === 'string' ? e.data : '';
@@ -119,7 +131,8 @@ function analyzeFenWithStockfish(fen, depth) {
         }
       }
       if (line.indexOf('bestmove') === 0) {
-        clearTimeout(timeout);
+        clearTimeout(stopTimer);
+        clearTimeout(hardTimeout);
         sfWorker.removeEventListener('message', onMsg);
         const parts = line.split(' ');
         const bestMoveUci = parts[1] && parts[1] !== '(none)' ? parts[1] : null;
@@ -134,7 +147,7 @@ function analyzeFenWithStockfish(fen, depth) {
 
     sfWorker.addEventListener('message', onMsg);
     sfWorker.postMessage('position fen ' + fen);
-    sfWorker.postMessage('go depth ' + depth);
+    sfWorker.postMessage('go movetime ' + movetimeMs);
   });
 }
 
