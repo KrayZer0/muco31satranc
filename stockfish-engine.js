@@ -35,13 +35,33 @@ function loadStockfish() {
     if (typeof Worker === 'undefined') throw new Error('Bu tarayıcı Web Worker desteklemiyor.');
 
     const engineUrl = STOCKFISH_BASE_URL + STOCKFISH_ENGINE_FILE;
+    const wasmUrl = STOCKFISH_BASE_URL + 'stockfish.wasm';
+
     const res = await fetch(engineUrl);
     if (!res.ok) throw new Error('Motor dosyası indirilemedi: HTTP ' + res.status);
     const engineCode = await res.text();
 
-    const prefix =
-      "var Module = (typeof Module !== 'undefined') ? Module : {};\n" +
-      "Module.locateFile = function (path) { return '" + STOCKFISH_BASE_URL + "' + path; };\n";
+    // ÖNEMLİ: Bu kod bir Blob URL'den worker olarak çalıştığı için,
+    // motorun .wasm dosyasını göreceli bir yoldan bulmaya çalışması
+    // başarısız olur (blob'un "konumu" anlamsızdır). Bunu kesin
+    // çözmek için Module.instantiateWasm kancasını kullanıp .wasm
+    // baytlarını doğrudan CDN'in mutlak adresinden kendimiz çekiyoruz.
+    // Bu, Emscripten'in resmi ve en güvenilir özelleştirme noktasıdır.
+    const prefix = `
+      var Module = (typeof Module !== 'undefined') ? Module : {};
+      Module.locateFile = function (path) { return '${STOCKFISH_BASE_URL}' + path; };
+      Module.instantiateWasm = function (imports, successCallback) {
+        fetch('${wasmUrl}')
+          .then(function (response) {
+            if (!response.ok) throw new Error('wasm indirilemedi: ' + response.status);
+            return response.arrayBuffer();
+          })
+          .then(function (bytes) { return WebAssembly.instantiate(bytes, imports); })
+          .then(function (result) { successCallback(result.instance, result.module); })
+          .catch(function (err) { self.postMessage('__sf_wasm_error__ ' + err.message); });
+        return {};
+      };
+    `;
 
     const blob = new Blob([prefix + engineCode], { type: 'application/javascript' });
     const blobUrl = URL.createObjectURL(blob);
@@ -51,11 +71,17 @@ function loadStockfish() {
     await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         worker.terminate();
-        reject(new Error('Motor başlatma zaman aşımına uğradı.'));
-      }, 9000);
+        reject(new Error('Motor başlatma zaman aşımına uğradı (uciok gelmedi).'));
+      }, 12000);
 
       function onMsg(e) {
         const line = typeof e.data === 'string' ? e.data : '';
+        if (line.indexOf('__sf_wasm_error__') === 0) {
+          clearTimeout(timeout);
+          worker.removeEventListener('message', onMsg);
+          reject(new Error('WASM yüklenemedi: ' + line.replace('__sf_wasm_error__ ', '')));
+          return;
+        }
         if (line === 'uciok') {
           worker.postMessage('isready');
         } else if (line === 'readyok') {

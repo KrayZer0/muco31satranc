@@ -417,7 +417,7 @@ function showAnalysisView() {
     setAnalysisEngineNote('basic');
     document.getElementById('analysisSummary').innerHTML = '<p class="log-empty">Temel motorla analiz ediliyor…</p>';
     setTimeout(() => {
-      const result = analyzeGame(descriptors, { depth: 1 });
+      const result = analyzeGame(descriptors, { depth: 2 });
       renderAnalysisSummary(result.stats);
       renderAnalysisGraph(result.evalTrend);
       renderAnalysisMoveList(result.perMove);
@@ -426,14 +426,17 @@ function showAnalysisView() {
 }
 
 function setAnalysisEngineNote(kind) {
+  const badge = document.getElementById('analysisEngineBadge');
   const el = document.getElementById('analysisDisclaimer');
-  if (!el) return;
   if (kind === 'stockfish') {
-    el.textContent = 'Bu analiz gerçek Stockfish motoruyla (derinlik 8) yapılıyor. Uzun oyunlarda biraz sürebilir, lütfen bekleyin.';
+    if (badge) { badge.textContent = '✓ Motor: Stockfish (gerçek motor)'; badge.className = 'analysis-engine-badge stockfish'; }
+    if (el) el.textContent = 'Bu analiz gerçek Stockfish motoruyla (derinlik 8) yapılıyor. Uzun oyunlarda biraz sürebilir, lütfen bekleyin.';
   } else if (kind === 'basic') {
-    el.textContent = 'Stockfish yüklenemedi (bağlantı sorunu olabilir), sitenin kendi basit motoruyla analiz ediliyor. Bu, profesyonel bir motor kadar güçlü değildir.';
+    if (badge) { badge.textContent = '⚠ Motor: Temel (Stockfish yüklenemedi)'; badge.className = 'analysis-engine-badge basic'; }
+    if (el) el.textContent = 'Stockfish yüklenemedi, sitenin kendi basit motoruyla analiz ediliyor. Bu motor zayıftır; birkaç hamle sonrasını göremeyebilir, sonuçlara bu şekilde bakın.';
   } else {
-    el.textContent = 'Gelişmiş motor (Stockfish) yükleniyor…';
+    if (badge) { badge.textContent = 'Motor kontrol ediliyor…'; badge.className = 'analysis-engine-badge'; }
+    if (el) el.textContent = 'Gelişmiş motor (Stockfish) yükleniyor…';
   }
 }
 
