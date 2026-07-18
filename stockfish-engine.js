@@ -41,20 +41,51 @@ function loadStockfish() {
     if (!res.ok) throw new Error('Motor dosyası indirilemedi: HTTP ' + res.status);
     const rawCode = await res.text();
 
-    // ÖNEMLİ: Bu motor derlemesi .wasm dosyasını düz, göreceli bir metin
-    // sabiti olarak ("stockfish.wasm") arıyor; Module.locateFile/instantiateWasm
-    // kancalarını dinlemiyor. Bunu kesin çözmek için kaynak kodun İÇİNDEKİ
-    // bu metni, çalışmadan önce, doğrudan tam CDN adresiyle değiştiriyoruz.
-    const engineCode = rawCode.replace(/(['"])stockfish\.wasm\1/g, `$1${wasmUrl}$1`);
-
-    // Ek güvenlik: klasik Module kancalarını da tanımlayalım (zararı olmaz,
-    // bu derleme kullanmasa bile başka bir derleme kullanabilir).
+    // ÖNEMLİ: Bu motor derlemesi .wasm dosyasını göreceli bir yoldan
+    // ("stockfish.wasm") yüklemeye çalışıyor; bu bir Blob worker
+    // içinde çözülemiyor. Kaynak kodun kendisini tahmin etmeye
+    // çalışmak yerine, worker'ın kendi fetch/XHR fonksiyonlarını ele
+    // geçirip HER göreceli adresi otomatik olarak tam CDN adresine
+    // çeviriyoruz — bu, motorun bu isteği nasıl oluşturduğundan
+    // bağımsız, kesin çalışan bir yöntemdir.
     const prefix = `
       var Module = (typeof Module !== 'undefined') ? Module : {};
       Module.locateFile = function (path) {
         return path.indexOf('http') === 0 ? path : '${STOCKFISH_BASE_URL}' + path;
       };
+      (function () {
+        function resolveUrl(u) {
+          if (typeof u === 'string' && u.indexOf('http') !== 0 && u.indexOf('blob:') !== 0) {
+            return '${STOCKFISH_BASE_URL}' + u.replace(/^\\.?\\/?/, '');
+          }
+          return u;
+        }
+        var _origFetch = self.fetch ? self.fetch.bind(self) : null;
+        if (_origFetch) {
+          self.fetch = function (input, init) {
+            if (typeof input === 'string') input = resolveUrl(input);
+            return _origFetch(input, init);
+          };
+        }
+        var _origOpen = self.XMLHttpRequest ? self.XMLHttpRequest.prototype.open : null;
+        if (_origOpen) {
+          self.XMLHttpRequest.prototype.open = function (method, url) {
+            var args = Array.prototype.slice.call(arguments);
+            args[1] = resolveUrl(url);
+            return _origOpen.apply(this, args);
+          };
+        }
+        var _origImportScripts = self.importScripts;
+        if (_origImportScripts) {
+          self.importScripts = function () {
+            var args = Array.prototype.slice.call(arguments).map(resolveUrl);
+            return _origImportScripts.apply(self, args);
+          };
+        }
+      })();
     `;
+
+    const engineCode = rawCode.replace(/(['"])stockfish\.wasm\1/g, `$1${wasmUrl}$1`);
 
     const blob = new Blob([prefix + engineCode], { type: 'application/javascript' });
     const blobUrl = URL.createObjectURL(blob);
@@ -69,6 +100,7 @@ function loadStockfish() {
 
       function onMsg(e) {
         const line = typeof e.data === 'string' ? e.data : '';
+        if (SF_DEBUG && line) console.log('[SF:handshake]', line);
         if (line === 'uciok') {
           worker.postMessage('isready');
         } else if (line === 'readyok') {
@@ -80,10 +112,13 @@ function loadStockfish() {
       worker.addEventListener('message', onMsg);
       worker.addEventListener('error', (err) => {
         clearTimeout(timeout);
+        console.error('[müco31] Stockfish worker (yükleme sırasında) hata verdi:', err.message || err);
         reject(err);
       });
       worker.postMessage('uci');
     });
+
+    if (SF_DEBUG) console.log('[müco31] Stockfish motoru başarıyla yüklendi ve hazır.');
 
     worker.postMessage('ucinewgame');
     sfWorker = worker;
@@ -101,26 +136,37 @@ function loadStockfish() {
  * Sonuç, o pozisyonda sırası gelen tarafın perspektifinden bir
  * centipawn değeri (evalCp) ve varsa mat sayısı (mateIn) döndürür.
  */
+let SF_DEBUG = true; // sorun devam ederse konsolda ham motor çıktısını görebilmek için
+
 function analyzeFenWithStockfish(fen, movetimeMs) {
   return new Promise((resolve, reject) => {
     if (!sfWorker) { reject(new Error('Motor hazır değil.')); return; }
 
     let lastScore = { evalCp: 0, mateIn: null };
-    let stopped = false;
 
     // Motor movetime'a tam uymazsa, yine de zorla durdurmayı deneriz.
     const stopTimer = setTimeout(() => {
-      stopped = true;
       sfWorker.postMessage('stop');
     }, movetimeMs + 2000);
 
     const hardTimeout = setTimeout(() => {
       sfWorker.removeEventListener('message', onMsg);
+      sfWorker.removeEventListener('error', onErr);
       reject(new Error('Analiz zaman aşımına uğradı.'));
     }, movetimeMs + 8000);
 
+    function onErr(err) {
+      clearTimeout(stopTimer);
+      clearTimeout(hardTimeout);
+      sfWorker.removeEventListener('message', onMsg);
+      sfWorker.removeEventListener('error', onErr);
+      console.error('[müco31] Stockfish worker hata verdi:', err.message || err);
+      reject(new Error('Motor çalışırken hata oluştu: ' + (err.message || 'bilinmiyor')));
+    }
+
     function onMsg(e) {
       const line = typeof e.data === 'string' ? e.data : '';
+      if (SF_DEBUG && line) console.log('[SF]', line);
       if (line.indexOf('info') === 0 && line.indexOf('score') !== -1) {
         const cpMatch = line.match(/score cp (-?\d+)/);
         const mateMatch = line.match(/score mate (-?\d+)/);
@@ -134,6 +180,7 @@ function analyzeFenWithStockfish(fen, movetimeMs) {
         clearTimeout(stopTimer);
         clearTimeout(hardTimeout);
         sfWorker.removeEventListener('message', onMsg);
+        sfWorker.removeEventListener('error', onErr);
         const parts = line.split(' ');
         const bestMoveUci = parts[1] && parts[1] !== '(none)' ? parts[1] : null;
         let evalCp = lastScore.evalCp;
@@ -146,6 +193,8 @@ function analyzeFenWithStockfish(fen, movetimeMs) {
     }
 
     sfWorker.addEventListener('message', onMsg);
+    sfWorker.addEventListener('error', onErr);
+    if (SF_DEBUG) console.log('[SF:gönder]', 'position fen ' + fen, '| go movetime ' + movetimeMs);
     sfWorker.postMessage('position fen ' + fen);
     sfWorker.postMessage('go movetime ' + movetimeMs);
   });
